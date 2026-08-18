@@ -1,0 +1,114 @@
+diff --git a/README.md b/README.md
+index 0000000..1111111 100644
+--- a/README.md
++++ b/README.md
+@@ -1,9 +1,13 @@
+-# WoW-Map-Asset-Parser
++# WoW Map Asset Parser
+
+-A command line utility to extract and package assets for WOTLK (3.3.5) maps.
++A command line utility to extract and package assets for World of Warcraft
++pre-Cataclysm maps.
+
+-This reads ADT files to identify the assets in use and then selectively
+-package only the needed data.
++Supports all monolithic (pre-Cataclysm) ADT files:
++- **Vanilla** (1.12.x)
++- **TBC** (2.4.3)
++- **WotLK** (3.3.5a)
++
++All three versions use the same ADT v18 format with identical MMDX, MWMO,
++MTEX, MDDF, and MODF chunk layouts.  The parser reads these chunks by
++scanning for their magic bytes, so no version-specific handling is needed.
+
+ ## Requirements
+
+-Compatible with WOTLK version 3.3.5 only.
+-
+ Requires unpacked data files (external to MPQ archives).
+
++The M2 and WMO binary formats read by this tool (texture lookup tables,
++MODN/MOTX/MOMT chunks) are also identical across Vanilla, TBC, and WotLK.
++
+ ## Options
+
+ ```
+diff --git a/WoWResourceParser/Program.cs b/WoWResourceParser/Program.cs
+index 0000000..1111111 100644
+--- a/WoWResourceParser/Program.cs
++++ b/WoWResourceParser/Program.cs
+@@ -7,6 +7,9 @@ using CommandLine;
+
+ namespace WoWResourceParser
+ {
++    // Supports Vanilla (1.12), TBC (2.4.3), and WotLK (3.3.5) ADT files.
++    // All pre-Cataclysm ADTs use MVER 18 with identical chunk layouts for
++    // MMDX, MWMO, MTEX, MDDF, and MODF.
+     class Program
+     {
+         private const string LogPath = "log.txt";
+@@ -131,6 +134,8 @@ namespace WoWResourceParser
+             Log("-------------------");
+             var banner = @"
+ Starting program:
++ Supported versions: Vanilla (1.12), TBC (2.4.3), WotLK (3.3.5)
++ All use the same monolithic ADT v18 format.
+  For each ADT:
+   Extract every M2 path
+   Extract every WMO path
+@@ -159,6 +164,42 @@ ADT Folder:" + $"\n {adtFolder}\n" +
+             Log("-------------------");
+         }
+
++        /// <summary>
++        /// Validates that an ADT file has MVER version 18 (pre-Cataclysm).
++        /// Returns true if valid or if MVER cannot be found (best-effort).
++        /// Logs a warning for non-18 versions but does not block processing,
++        /// since the chunk-scanning approach may still extract usable data.
++        /// </summary>
++        static bool ValidateAdtVersion(string path)
++        {
++            try
++            {
++                using (var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read))
++                {
++                    if (fileStream.Length < 8)
++                    {
++                        Log($" [WARNING] File too small to be a valid ADT: {path}");
++                        return false;
++                    }
++                    using (var binReader = new BinaryReader(fileStream))
++                    {
++                        // MVER chunk: 4 bytes magic "REVM" (reversed) + 4 bytes size + 4 bytes version
++                        uint magic = binReader.ReadUInt32();
++                        // 0x5245564D = "REVM" in little-endian = "MVER"
++                        if (magic != 0x5245564D)
++                        {
++                            Log($" [WARNING] File does not start with MVER chunk: {path}");
++                            return true; // best-effort: still try to parse
++                        }
++                        uint size = binReader.ReadUInt32();
++                        uint version = binReader.ReadUInt32();
++                        if (version != 18)
++                        {
++                            Log($" [WARNING] ADT version is {version}, expected 18 (pre-Cataclysm). Parsing may not work correctly: {path}");
++                        }
++                        return true;
++                    }
++                }
++            }
++            catch (Exception) { return true; }
++        }
++
+         static void SaveFileOutput(string path, HashSet<string> wmos, HashSet<string> m2s, HashSet<string> blps)
+         {
+             var output = new List<string>(wmos.Count + m2s.Count + blps.Count);
+@@ -180,6 +221,8 @@ ADT Folder:" + $"\n {adtFolder}\n" +
+                 if (!filePath.ToLower().EndsWith(".adt"))
+                     continue;
+
++                ValidateAdtVersion(filePath);
++
+                 var newM2s = ExtractM2PathsFromADT(filePath);
+                 foreach (var m2 in newM2s)
+                 {

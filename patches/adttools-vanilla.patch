@@ -1,0 +1,90 @@
+diff --git a/README.md b/README.md
+index 0000000..1111111 100644
+--- a/README.md
++++ b/README.md
+@@ -1,8 +1,14 @@
+ # AdtTools
+
+ This project aims to provide a framework to easily creating tools manipulating Adt's.
+-These tools are compatible and tested with 2.4.3 and 3.3.5 versions. This is not tested with other versions, though I think this will work for 1.12 too.
++These tools are compatible with all pre-Cataclysm ADT versions:
++- **Vanilla** (1.12.x)
++- **TBC** (2.4.3)
++- **WotLK** (3.3.5a)
+
++All three versions use the same monolithic ADT v18 format.  WotLK-specific
++chunks (MFBO, MH2O, MTXF, MCCV) are read and written only when present in
++the file -- Vanilla and TBC ADTs that lack these chunks are handled correctly.
++
+ The process works in 3 steps :
+
+ - Opening and generating the adt model in memory. The adt data is stored inside meaninful variables usable by tools, as opposed to working with raw bytes.
+diff --git a/core/adt.cpp b/core/adt.cpp
+index 0000000..1111111 100644
+--- a/core/adt.cpp
++++ b/core/adt.cpp
+@@ -18,6 +18,13 @@ adt::adt(std::fstream& adtFile)
+         exit(1);
+     }
+
++    // Log the ADT version.  All pre-Cataclysm ADTs use version 18.
++    // Vanilla (1.12), TBC (2.4.3), and WotLK (3.3.5) are all v18.
++    sLogger->Out(Logger::LOG_LEVEL_DEBUG, "ADT version: %u", mver->version);
++    if (mver->version != 18)
++        sLogger->Out(Logger::LOG_LEVEL_ERROR,
++            "Unexpected ADT version %u (expected 18 for pre-Cataclysm). Parsing may fail.", mver->version);
++
+     try
+     {
+         sLogger->Out(Logger::LOG_LEVEL_DEBUG, "Extracting mhdr...");
+@@ -98,7 +105,15 @@ void adt::WriteToDisk(std::fstream& adtFile)
+     }
+     else { mhdr->offsMFBO = NULL; }
+
+-    adtFile.seekp(32768, std::ios_base::cur);
++    // In WotLK ADTs, there is typically padding between the terrain data
++    // and the MH2O water chunk.  For Vanilla/TBC ADTs that lack MH2O,
++    // this padding is unnecessary and would bloat the output file.
++    // Only add padding when MH2O or MTXF data will follow.
++    bool hasPostMcnkChunks = (mh2o != nullptr) || (mtxf != nullptr);
++    if (hasPostMcnkChunks)
++    {
++        adtFile.seekp(32768, std::ios_base::cur);
++    }
+
+     if (mh2o)
+     {
+diff --git a/core/chunks/MCNK.cpp b/core/chunks/MCNK.cpp
+index 0000000..1111111 100644
+--- a/core/chunks/MCNK.cpp
++++ b/core/chunks/MCNK.cpp
+@@ -32,7 +32,15 @@ MCNK::MCNK(std::fstream& adtFile, MCIN* mcin_) :
+         if (entries[i].header.ofsMCSE)
+             entries[i].mcse = std::make_unique<MCSE>(adtFile, MCNKChunk_Start + entries[i].header.ofsMCSE);
+-        if (entries[i].header.ofsMCCV)
++
++        // MCCV (vertex shading) was added in WotLK.  In Vanilla/TBC ADTs,
++        // the field at offset 0x74 in the MCNK header was "textureId" and
++        // may contain a non-zero value that is NOT an MCCV offset.  The
++        // FLAG_MCCV (0x40) flag in the MCNK header reliably indicates
++        // whether the chunk actually contains MCCV data.  Checking both
++        // the flag and the offset prevents a false read on Vanilla ADTs
++        // where textureId happened to be non-zero.
++        if ((entries[i].header.flags & FLAG_MCCV) && entries[i].header.ofsMCCV)
+             entries[i].mccv = std::make_unique<MCCV>(adtFile, MCNKChunk_Start + entries[i].header.ofsMCCV);
+
+         adtFile.seekg(MCNKChunk_Start + sizeof(ChunkHeader) + mcin->entries[i].size); //get ready for next entry
+diff --git a/core/chunks/MCNK.h b/core/chunks/MCNK.h
+index 0000000..1111111 100644
+--- a/core/chunks/MCNK.h
++++ b/core/chunks/MCNK.h
+@@ -36,7 +36,8 @@ struct MCNKHeader // --schlumpf_ 17:01, 10 August 2009 (CEST), based on: 03-29-
+ /*0x060*/  unsigned int ofsMCLQ;
+ /*0x064*/  unsigned int sizeLiquid;              // 8 when not used; only read if >8.
+ /*0x068*/  float position[3];
+-/*0x074*/  unsigned int ofsMCCV;                 // only with flags&0x40, had unsigned int textureId; in ObscuR's structure.
++/*0x074*/  unsigned int ofsMCCV;                 // WotLK+: offset to MCCV, only valid when flags & 0x40.
++                                                 // Vanilla/TBC: was "textureId", may be non-zero without MCCV.
+ /*0x078*/  unsigned int unused1;                 // ofsMCLV introduced in Cataclysm
+ /*0x07C*/  unsigned int unused2;
+ /*0x080*/

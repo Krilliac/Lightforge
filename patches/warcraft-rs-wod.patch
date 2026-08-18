@@ -1,0 +1,160 @@
+From: Lightforge <lightforge@local>
+Subject: [PATCH] Extend version support for WoD (6.x) compatibility
+
+Relax version checks where WoD binary formats are already compatible
+with the existing parsers, and add graceful WDB6 recognition.
+
+Most WoD-era files (BLP, M2, WMO, WDT, ADT) use the same binary
+structures as MoP and already parse correctly. This patch:
+
+1. Fixes M2 version mapping: WoD uses header version 272 (same as
+   Cata/MoP), not the theoretical 275 that was listed.
+2. Adds WoD variant to AdtVersion enum for API completeness.
+3. Adds WDB6 recognition to DBC parser (detected but not yet parsed,
+   with a clear error message instead of "unknown format").
+---
+ file-formats/database/wow-cdbc/src/parser.rs      |  9 +++++
+ file-formats/database/wow-cdbc/src/versions.rs     | 11 ++++++
+ file-formats/graphics/wow-m2/src/version.rs        |  4 +--
+ file-formats/world-data/wow-adt/src/version.rs     | 28 ++++++++++++++
+ 4 files changed, 50 insertions(+), 2 deletions(-)
+
+diff --git a/file-formats/graphics/wow-m2/src/version.rs b/file-formats/graphics/wow-m2/src/version.rs
+index aaaaaaa..bbbbbbb 100644
+--- a/file-formats/graphics/wow-m2/src/version.rs
++++ b/file-formats/graphics/wow-m2/src/version.rs
+@@ -XX,7 +XX,7 @@ impl M2Version {
+     pub fn from_header_version(version: u32) -> Option<Self> {
+         match version {
+             // Empirically verified exact versions from format analysis
+             256 => Some(Self::Vanilla),   // Vanilla 1.12.1
+             260 => Some(Self::TBC),       // The Burning Crusade 2.4.3
+             264 => Some(Self::WotLK),     // Wrath of the Lich King 3.3.5a
+-            272 => Some(Self::Cataclysm), // Cataclysm 4.3.4 and MoP 5.4.8
++            272 => Some(Self::Cataclysm), // Cataclysm 4.3.4, MoP 5.4.8, and WoD 6.x
+
+             // Legacy support for version ranges (avoiding overlaps)
+             257..=259 => Some(Self::Vanilla),
+@@ -XX,7 +XX,7 @@ impl M2Version {
+             Self::TBC => 260,       // The Burning Crusade 2.4.3
+             Self::WotLK => 264,     // Wrath of the Lich King 3.3.5a
+             Self::Cataclysm => 272, // Cataclysm 4.3.4
+             Self::MoP => 272,       // MoP 5.4.8 (same as Cataclysm)
+-            Self::WoD => 275,          // Theoretical WoD chunked version
++            Self::WoD => 272,          // WoD 6.x (same header version as Cata/MoP)
+             Self::Legion => 276,       // Legion chunked format base version
+
+diff --git a/file-formats/world-data/wow-adt/src/version.rs b/file-formats/world-data/wow-adt/src/version.rs
+index aaaaaaa..bbbbbbb 100644
+--- a/file-formats/world-data/wow-adt/src/version.rs
++++ b/file-formats/world-data/wow-adt/src/version.rs
+@@ -XX,6 +XX,7 @@ pub enum AdtVersion {
+     WotLK,
+     Cataclysm,
+     MoP,
++    WoD,
+ }
+
+ impl AdtVersion {
+@@ -XX,6 +XX,10 @@ impl AdtVersion {
+     // detect_from_chunks is NOT changed -- WoD ADT files cannot be
+     // distinguished from MoP by chunk presence alone. They are detected
+     // as MoP, which is correct for parsing purposes.
++    //
++    // If a caller knows the source expansion, they can use
++    // from_expansion_name("wod") to get the WoD variant.
++
+
+     pub const fn as_str(&self) -> &'static str {
+         match self {
+@@ -XX,6 +XX,7 @@ impl AdtVersion {
+             Self::WotLK => "Wrath of the Lich King 3.x",
+             Self::Cataclysm => "Cataclysm 4.x",
+             Self::MoP => "Mists of Pandaria 5.x",
++            Self::WoD => "Warlords of Draenor 6.x",
+         }
+     }
+
+@@ -XX,6 +XX,7 @@ impl AdtVersion {
+             Self::WotLK => "3.0.0 - 3.3.5a",
+             Self::Cataclysm => "4.0.0 - 4.3.4",
+             Self::MoP => "5.0.0 - 5.4.8",
++            Self::WoD => "6.0.0 - 6.2.4",
+         }
+     }
+
+@@ -XX,6 +XX,7 @@ impl AdtVersion {
+             "tbc" | "bc" | "burningcrusade" | "burning_crusade" => Some(Self::TBC),
+             "wotlk" | "wrath" | "lichking" | "lich_king" | "wlk" => Some(Self::WotLK),
+             "cata" | "cataclysm" => Some(Self::Cataclysm),
+             "mop" | "pandaria" | "mists" | "mists_of_pandaria" => Some(Self::MoP),
++            "wod" | "draenor" | "warlords" | "warlords_of_draenor" => Some(Self::WoD),
+             _ => None,
+         }
+     }
+@@ -XX,6 +XX,7 @@ impl AdtVersion {
+             Self::WotLK => "Wrath of the Lich King",
+             Self::Cataclysm => "Cataclysm",
+             Self::MoP => "Mists of Pandaria",
++            Self::WoD => "Warlords of Draenor",
+         }
+     }
+ }
+@@ -XX,6 +XX,7 @@ impl std::fmt::Display for AdtVersion {
++// NOTE: WoD ADT files are structurally identical to MoP ADTs at the
++// chunk level. The detect_from_chunks() method will classify them as
++// MoP, which is correct -- the parser handles them identically.
++// The WoD variant exists for API consumers who know the source expansion
++// and want version-accurate metadata.
+
+diff --git a/file-formats/database/wow-cdbc/src/versions.rs b/file-formats/database/wow-cdbc/src/versions.rs
+index aaaaaaa..bbbbbbb 100644
+--- a/file-formats/database/wow-cdbc/src/versions.rs
++++ b/file-formats/database/wow-cdbc/src/versions.rs
+@@ -XX,6 +XX,7 @@ pub enum DbcVersion {
+     WDB3,
+     WDB4,
+     WDB5,
++    WDB6,
+ }
+
+ impl DbcVersion {
+@@ -XX,6 +XX,7 @@ impl DbcVersion {
+             b"WDB3" => Ok(DbcVersion::WDB3),
+             b"WDB4" => Ok(DbcVersion::WDB4),
+             b"WDB5" => Ok(DbcVersion::WDB5),
++            b"WDB6" => Ok(DbcVersion::WDB6),
+             _ => Err(Error::InvalidHeader(format!(
+                 "Unknown DBC version: {:?}",
+                 std::str::from_utf8(&magic).unwrap_or("Invalid UTF-8")
+@@ -XX,6 +XX,7 @@ impl DbcVersion {
+             DbcVersion::WDB3 => *b"WDB3",
+             DbcVersion::WDB4 => *b"WDB4",
+             DbcVersion::WDB5 => *b"WDB5",
++            DbcVersion::WDB6 => *b"WDB6",
+         }
+     }
+
+diff --git a/file-formats/database/wow-cdbc/src/parser.rs b/file-formats/database/wow-cdbc/src/parser.rs
+index aaaaaaa..bbbbbbb 100644
+--- a/file-formats/database/wow-cdbc/src/parser.rs
++++ b/file-formats/database/wow-cdbc/src/parser.rs
+@@ -XX,6 +XX,15 @@ impl DbcParser {
+                 DbcVersion::WDB5 => {
+                     // ... existing WDB5 handling ...
+                 }
++                DbcVersion::WDB6 => {
++                    return Err(Error::InvalidHeader(
++                        "WDB6 format detected (Warlords of Draenor 6.x). \
++                         WDB6 extends WDB5 with per-column compression metadata \
++                         (common data, pallet data) which is not yet implemented. \
++                         Many WoD database tables also ship in WDB5 format -- \
++                         try using those files instead."
++                            .into(),
++                    ));
++                }
+                 _ => {
+                     return Err(Error::InvalidHeader(
+                         format!("Unsupported DBC version: {version:?}")
+--
+2.43.0

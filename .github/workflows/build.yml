@@ -1,0 +1,53 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore Lightforge.sln
+
+      - name: Build
+        run: dotnet build Lightforge.sln -c Release --no-restore
+
+      - name: Test
+        run: dotnet test Lightforge.sln -c Release --no-build --verbosity normal
+
+      - name: Publish GUI
+        if: github.event_name == 'release'
+        run: dotnet publish Lightforge/Lightforge.csproj -c Release -o publish/gui --no-build
+
+      - name: Publish CLI
+        if: github.event_name == 'release'
+        run: dotnet publish Lightforge.CLI/Lightforge.CLI.csproj -c Release -o publish/cli --no-build
+
+      - name: Package GUI
+        if: github.event_name == 'release'
+        run: Compress-Archive -Path publish/gui/* -DestinationPath "Lightforge-${{ github.event.release.tag_name }}-gui.zip"
+
+      - name: Package CLI
+        if: github.event_name == 'release'
+        run: Compress-Archive -Path publish/cli/* -DestinationPath "Lightforge-${{ github.event.release.tag_name }}-cli.zip"
+
+      - name: Upload release assets
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ github.event.release.tag_name }} "Lightforge-${{ github.event.release.tag_name }}-gui.zip" --clobber
+          gh release upload ${{ github.event.release.tag_name }} "Lightforge-${{ github.event.release.tag_name }}-cli.zip" --clobber

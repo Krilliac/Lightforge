@@ -115,6 +115,8 @@ The CLI includes custom tools that fill gaps in the community toolkit:
 | `listfile` | Search the community listfile CSV for WoW client assets by name pattern. Supports glob wildcards and extension filtering |
 | `sql-gen` | Generate ready-to-fill SQL INSERT templates for TrinityCore/AzerothCore: items, creatures, quests, spawns, vendors, loot, gossip, trainers, waypoints, SmartAI |
 
+![CLI usage](docs/screenshots/cli-usage.png)
+
 ### Examples
 
 List tools for a specific expansion:

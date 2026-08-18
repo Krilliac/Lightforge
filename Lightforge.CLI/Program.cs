@@ -13,15 +13,22 @@ static class Program
             return 0;
         }
 
+        var sub = args.Skip(1).ToArray();
         return args[0].ToLowerInvariant() switch
         {
-            "tools" or "list" => ListTools(args.Skip(1).ToArray()),
-            "search" => SearchTools(args.Skip(1).ToArray()),
-            "launch" => LaunchTool(args.Skip(1).ToArray()),
-            "new" => NewProject(args.Skip(1).ToArray()),
-            "info" => ProjectInfo(args.Skip(1).ToArray()),
+            "tools" or "list" => ListTools(sub),
+            "search" => SearchTools(sub),
+            "launch" => LaunchTool(sub),
+            "new" => NewProject(sub),
+            "info" => ProjectInfo(sub),
             "versions" => ListVersions(),
-            "validate" => ValidateTools(args.Skip(1).ToArray()),
+            "validate" => ValidateTools(sub),
+            "dbc-info" => DbcTool.Info(sub),
+            "dbc-diff" => DbcTool.Diff(sub),
+            "blp-info" => BlpTool.Info(sub),
+            "adt-info" => AdtTool.Info(sub),
+            "listfile" => ListfileTool.Search(sub),
+            "sql-gen" => SqlGenTool.Generate(sub),
             "help" or "--help" or "-h" => ShowHelp(args.Skip(1).FirstOrDefault()),
             "version" or "--version" or "-v" => ShowVersion(),
             _ => UnknownCommand(args[0])
@@ -43,6 +50,20 @@ static class Program
         PrintCommand("info [project]", "Show project details");
         PrintCommand("versions", "List all supported WoW versions");
         PrintCommand("validate [path]", "Check which tools have executables present");
+
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine("\n  Lightforge Tools:");
+        Console.ResetColor();
+        PrintCommand("dbc-info <file>", "Inspect DBC/DB2 file header and structure");
+        PrintCommand("dbc-diff <a> <b>", "Compare two DBC files row-by-row");
+        PrintCommand("blp-info <file|dir>", "Read BLP texture headers (batch supported)");
+        PrintCommand("adt-info <file>", "Inspect ADT map tile chunks and assets");
+        PrintCommand("listfile <pattern>", "Search the community listfile for assets");
+        PrintCommand("sql-gen [template]", "Generate SQL templates for WoW databases");
+
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine();
+        Console.ResetColor();
         PrintCommand("help [command]", "Show detailed help for a command");
         Console.WriteLine($"\n{WowToolRegistry.GetAllTools().Length} tools registered, " +
             $"Vanilla 1.12.1 through BfA 8.3.7");

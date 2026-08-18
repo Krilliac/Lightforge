@@ -89,8 +89,31 @@ Commands:
   validate [path]       Check which tools have executables present
   help [command]        Show detailed help for a command
 
+  Lightforge Tools:
+  dbc-info <file>       Inspect DBC/DB2 file header and structure
+  dbc-diff <a> <b>      Compare two DBC files row-by-row
+  blp-info <file|dir>   Read BLP texture headers (batch supported)
+  adt-info <file>       Inspect ADT map tile chunks and assets
+  listfile <pattern>    Search the community listfile for assets
+  sql-gen [template]    Generate SQL templates for WoW databases
+
+  help [command]        Show detailed help for a command
+
 73 tools registered, Vanilla 1.12.1 through BfA 8.3.7
 ```
+
+### Built-in Tools
+
+The CLI includes custom tools that fill gaps in the community toolkit:
+
+| Tool | Description |
+|------|-------------|
+| `dbc-info` | Inspect DBC/DB2 file headers -- record count, field count, string block stats, format version (WDBC/WDB2/WDB5/WDB6) |
+| `dbc-diff` | Compare two DBC files row-by-row -- shows added, removed, and modified records with field-level detail (`--verbose`) |
+| `blp-info` | Read BLP texture headers -- dimensions, compression type (DXT1/DXT3/DXT5/palette), mip chain, VRAM estimate. Supports batch mode on directories |
+| `adt-info` | Inspect ADT map tiles -- chunk layout, texture/model/WMO lists, doodad and WMO placement counts |
+| `listfile` | Search the community listfile CSV for WoW client assets by name pattern. Supports glob wildcards and extension filtering |
+| `sql-gen` | Generate ready-to-fill SQL INSERT templates for TrinityCore/AzerothCore: items, creatures, quests, spawns, vendors, loot, gossip, trainers, waypoints, SmartAI |
 
 ### Examples
 

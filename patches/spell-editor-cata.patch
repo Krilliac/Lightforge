@@ -1,0 +1,664 @@
+diff --git a/Documentation/Bindings_434_cata/Spell.txt b/Documentation/Bindings_434_cata/Spell.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/Spell.txt
+@@ -0,0 +1,50 @@
++# Spell.dbc structure for 4.3.4 15595 (Cataclysm)
++# 48 columns, record size 192 bytes
++# Many fields that existed inline in WotLK moved to sub-tables.
++# Sub-table foreign keys are the *ID fields at positions 31-47.
++uint ID
++uint Attributes
++uint AttributesEx
++uint AttributesEx2
++uint AttributesEx3
++uint AttributesEx4
++uint AttributesEx5
++uint AttributesEx6
++uint AttributesEx7
++uint AttributesEx8
++uint AttributesEx9
++uint AttributesEx10
++uint CastingTimeIndex
++uint DurationIndex
++uint PowerType
++uint RangeIndex
++float Speed
++uint SpellVisual1
++uint SpellVisual2
++uint SpellIconID
++uint ActiveIconID
++uint SpellName0 string
++uint SpellRank0 string
++uint SpellDescription0 string
++uint SpellToolTip0 string
++uint SchoolMask
++uint RuneCostID
++uint SpellMissileID
++uint PowerDisplayId
++uint Difficulty
++float BonusCoefficient
++uint ScalingID
++uint AuraOptionsID
++uint AuraRestrictionsID
++uint CastingRequirementsID
++uint CategoriesID
++uint ClassOptionsID
++uint CooldownsID
++uint Unknown38
++uint EquippedItemsID
++uint InterruptsID
++uint LevelsID
++uint PowerID
++uint ReagentsID
++uint ShapeshiftID
++uint TargetRestrictionsID
++uint TotemsID
++uint RequiredProjectID
+diff --git a/Documentation/Bindings_434_cata/SpellEffect.txt b/Documentation/Bindings_434_cata/SpellEffect.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellEffect.txt
+@@ -0,0 +1,29 @@
++# SpellEffect.dbc structure for 4.3.4 15595 (Cataclysm)
++# 26 columns, record size 104 bytes
++# Contains per-effect data that was inline in WotLK Spell.dbc.
++# Multiple rows per spell (up to 3), linked by SpellID foreign key.
++uint ID
++uint Effect
++float EffectAmplitude
++uint EffectAura
++uint EffectAuraPeriod
++int EffectBasePoints
++float EffectBonusCoefficient
++float EffectChainAmplitude
++uint EffectChainTargets
++int EffectDieSides
++uint EffectItemType
++uint EffectMechanic
++int EffectMiscValue
++int EffectMiscValueB
++float EffectPointsPerResource
++uint EffectRadiusIndex
++uint EffectRadiusMaxIndex
++float EffectRealPointsPerLevel
++uint EffectSpellClassMaskA
++uint EffectSpellClassMaskB
++uint EffectSpellClassMaskC
++uint EffectTriggerSpell
++uint EffectImplicitTargetA
++uint EffectImplicitTargetB
++uint SpellID
++uint EffectIndex
+diff --git a/Documentation/Bindings_434_cata/SpellAuraOptions.txt b/Documentation/Bindings_434_cata/SpellAuraOptions.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellAuraOptions.txt
+@@ -0,0 +1,8 @@
++# SpellAuraOptions.dbc structure for 4.3.4 15595 (Cataclysm)
++# 5 columns, record size 20 bytes
++# Contains proc and stack data from WotLK Spell.dbc.
++uint ID
++uint CumulativeAura
++uint ProcChance
++uint ProcCharges
++uint ProcTypeMask
+diff --git a/Documentation/Bindings_434_cata/SpellAuraRestrictions.txt b/Documentation/Bindings_434_cata/SpellAuraRestrictions.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellAuraRestrictions.txt
+@@ -0,0 +1,12 @@
++# SpellAuraRestrictions.dbc structure for 4.3.4 15595 (Cataclysm)
++# 9 columns, record size 36 bytes
++# Contains aura state/spell restriction data from WotLK Spell.dbc.
++uint ID
++uint CasterAuraSpell
++uint CasterAuraState
++uint CasterAuraStateNot
++uint ExcludeCasterAuraSpell
++uint ExcludeTargetAuraSpell
++uint TargetAuraSpell
++uint TargetAuraState
++uint TargetAuraStateNot
+diff --git a/Documentation/Bindings_434_cata/SpellCastingRequirements.txt b/Documentation/Bindings_434_cata/SpellCastingRequirements.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellCastingRequirements.txt
+@@ -0,0 +1,10 @@
++# SpellCastingRequirements.dbc structure for 4.3.4 15595 (Cataclysm)
++# 7 columns, record size 28 bytes
++# Contains casting requirement data from WotLK Spell.dbc.
++uint ID
++uint FacingCasterFlags
++uint MinimumFactionId
++uint MinimumReputation
++uint RequiredAreasID
++uint RequiresSpellFocus
++uint RequiredAuraVision
+diff --git a/Documentation/Bindings_434_cata/SpellCategories.txt b/Documentation/Bindings_434_cata/SpellCategories.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellCategories.txt
+@@ -0,0 +1,10 @@
++# SpellCategories.dbc structure for 4.3.4 15595 (Cataclysm)
++# 7 columns, record size 28 bytes
++# Contains category/type data from WotLK Spell.dbc.
++uint ID
++uint Category
++uint DefenseType
++uint DispelType
++uint Mechanic
++uint PreventionType
++uint StartRecoveryCategory
+diff --git a/Documentation/Bindings_434_cata/SpellClassOptions.txt b/Documentation/Bindings_434_cata/SpellClassOptions.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellClassOptions.txt
+@@ -0,0 +1,10 @@
++# SpellClassOptions.dbc structure for 4.3.4 15595 (Cataclysm)
++# 7 columns, record size 28 bytes
++# Contains spell family data from WotLK Spell.dbc.
++uint ID
++uint ModalNextSpell
++uint SpellFamilyName
++uint SpellFamilyFlags
++uint SpellFamilyFlags1
++uint SpellFamilyFlags2
++uint SpellDescriptionVariableID
+diff --git a/Documentation/Bindings_434_cata/SpellCooldowns.txt b/Documentation/Bindings_434_cata/SpellCooldowns.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellCooldowns.txt
+@@ -0,0 +1,7 @@
++# SpellCooldowns.dbc structure for 4.3.4 15595 (Cataclysm)
++# 4 columns, record size 16 bytes
++# Contains cooldown data from WotLK Spell.dbc.
++uint ID
++uint CategoryRecoveryTime
++uint RecoveryTime
++uint StartRecoveryTime
+diff --git a/Documentation/Bindings_434_cata/SpellEquippedItems.txt b/Documentation/Bindings_434_cata/SpellEquippedItems.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellEquippedItems.txt
+@@ -0,0 +1,7 @@
++# SpellEquippedItems.dbc structure for 4.3.4 15595 (Cataclysm)
++# 4 columns, record size 16 bytes
++# Contains equipped item requirement data from WotLK Spell.dbc.
++uint ID
++int EquippedItemClass
++int EquippedItemInventoryTypeMask
++int EquippedItemSubClassMask
+diff --git a/Documentation/Bindings_434_cata/SpellInterrupts.txt b/Documentation/Bindings_434_cata/SpellInterrupts.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellInterrupts.txt
+@@ -0,0 +1,9 @@
++# SpellInterrupts.dbc structure for 4.3.4 15595 (Cataclysm)
++# 6 columns, record size 24 bytes
++# Contains interrupt flag data from WotLK Spell.dbc.
++uint ID
++uint AuraInterruptFlags1
++uint AuraInterruptFlags2
++uint ChannelInterruptFlags1
++uint ChannelInterruptFlags2
++uint InterruptFlags
+diff --git a/Documentation/Bindings_434_cata/SpellLevels.txt b/Documentation/Bindings_434_cata/SpellLevels.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellLevels.txt
+@@ -0,0 +1,7 @@
++# SpellLevels.dbc structure for 4.3.4 15595 (Cataclysm)
++# 4 columns, record size 16 bytes
++# Contains level requirement data from WotLK Spell.dbc.
++uint ID
++uint BaseLevel
++uint MaximumLevel
++uint SpellLevel
+diff --git a/Documentation/Bindings_434_cata/SpellPower.txt b/Documentation/Bindings_434_cata/SpellPower.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellPower.txt
+@@ -0,0 +1,11 @@
++# SpellPower.dbc structure for 4.3.4 15595 (Cataclysm)
++# 8 columns, record size 32 bytes
++# Contains mana/power cost data from WotLK Spell.dbc.
++uint ID
++uint ManaCost
++uint ManaCostPerLevel
++uint ManaCostPercentage
++uint ManaPerSecond
++uint ManaPerSecondPerLevel
++uint Unknown6
++float PowerCostPct2
+diff --git a/Documentation/Bindings_434_cata/SpellReagents.txt b/Documentation/Bindings_434_cata/SpellReagents.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellReagents.txt
+@@ -0,0 +1,20 @@
++# SpellReagents.dbc structure for 4.3.4 15595 (Cataclysm)
++# 17 columns, record size 68 bytes
++# Contains reagent data from WotLK Spell.dbc.
++uint ID
++int Reagent1
++int Reagent2
++int Reagent3
++int Reagent4
++int Reagent5
++int Reagent6
++int Reagent7
++int Reagent8
++uint ReagentCount1
++uint ReagentCount2
++uint ReagentCount3
++uint ReagentCount4
++uint ReagentCount5
++uint ReagentCount6
++uint ReagentCount7
++uint ReagentCount8
+diff --git a/Documentation/Bindings_434_cata/SpellScaling.txt b/Documentation/Bindings_434_cata/SpellScaling.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellScaling.txt
+@@ -0,0 +1,19 @@
++# SpellScaling.dbc structure for 4.3.4 15595 (Cataclysm)
++# 16 columns, record size 64 bytes
++# NEW in Cataclysm - no WotLK equivalent.
++uint ID
++int CastTimeMin
++int CastTimeMax
++int CastTimeMaxLevel
++int ScalingClass
++float Coefficient1
++float Coefficient2
++float Coefficient3
++float Variance1
++float Variance2
++float Variance3
++float ComboPointsCoefficient1
++float ComboPointsCoefficient2
++float ComboPointsCoefficient3
++float NerfFactor
++int NerfMaxLevel
+diff --git a/Documentation/Bindings_434_cata/SpellShapeshift.txt b/Documentation/Bindings_434_cata/SpellShapeshift.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellShapeshift.txt
+@@ -0,0 +1,9 @@
++# SpellShapeshift.dbc structure for 4.3.4 15595 (Cataclysm)
++# 6 columns, record size 24 bytes
++# Contains stance/shapeshift data from WotLK Spell.dbc.
++uint ID
++uint StancesNot1
++uint StancesNot2
++uint Stances1
++uint Stances2
++uint Unknown5
+diff --git a/Documentation/Bindings_434_cata/SpellTargetRestrictions.txt b/Documentation/Bindings_434_cata/SpellTargetRestrictions.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellTargetRestrictions.txt
+@@ -0,0 +1,9 @@
++# SpellTargetRestrictions.dbc structure for 4.3.4 15595 (Cataclysm)
++# 6 columns, record size 24 bytes
++# Contains target restriction data from WotLK Spell.dbc.
++uint ID
++float ConeAngle
++uint MaximumAffectedTargets
++uint MaximumTargetLevel
++uint TargetCreatureType
++uint Targets
+diff --git a/Documentation/Bindings_434_cata/SpellTotems.txt b/Documentation/Bindings_434_cata/SpellTotems.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellTotems.txt
+@@ -0,0 +1,8 @@
++# SpellTotems.dbc structure for 4.3.4 15595 (Cataclysm)
++# 5 columns, record size 20 bytes
++# Contains totem data from WotLK Spell.dbc.
++uint ID
++uint TotemCategory1
++uint TotemCategory2
++uint Totem1
++uint Totem2
+diff --git a/Documentation/Bindings_434_cata/SpellCastTimes.txt b/Documentation/Bindings_434_cata/SpellCastTimes.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellCastTimes.txt
+@@ -0,0 +1,6 @@
++# SpellCastTimes.dbc structure for 4.3.4 15595 (Cataclysm)
++# Same structure as WotLK (4 columns, 16 bytes)
++uint ID
++int CastingTime
++int CastingTimePerLevel
++int MinimumCastingTime
+diff --git a/Documentation/Bindings_434_cata/SpellDuration.txt b/Documentation/Bindings_434_cata/SpellDuration.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellDuration.txt
+@@ -0,0 +1,6 @@
++# SpellDuration.dbc structure for 4.3.4 15595 (Cataclysm)
++# Same structure as WotLK (4 columns, 16 bytes)
++uint ID
++uint BaseDuration
++int PerLevel
++int MaximumDuration
+diff --git a/Documentation/Bindings_434_cata/SpellRadius.txt b/Documentation/Bindings_434_cata/SpellRadius.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellRadius.txt
+@@ -0,0 +1,6 @@
++# SpellRadius.dbc structure for 4.3.4 15595 (Cataclysm)
++# Same structure as WotLK (4 columns, 16 bytes)
++uint ID
++float Radius
++float RadiusPerLevel
++float MaximumRadius
+diff --git a/Documentation/Bindings_434_cata/SpellRange.txt b/Documentation/Bindings_434_cata/SpellRange.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellRange.txt
+@@ -0,0 +1,12 @@
++# SpellRange.dbc structure for 4.3.4 15595 (Cataclysm)
++# 8 columns, record size 32 bytes
++# Changed from WotLK: locale strings reduced to single-locale.
++# WotLK had 16 Name + flags + 16 ShortName + flags = 38 columns.
++uint ID
++float MinimumRangeHostile
++float MinimumRangeFriend
++float MaximumRangeHostile
++float MaximumRangeFriend
++int Type
++uint Name string
++uint ShortName string
+diff --git a/Documentation/Bindings_434_cata/SpellIcon.txt b/Documentation/Bindings_434_cata/SpellIcon.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellIcon.txt
+@@ -0,0 +1,5 @@
++# SpellIcon.dbc structure for 4.3.4 15595 (Cataclysm)
++# Same structure as WotLK (2 columns)
++# Icon path is not localized, so no locale change.
++uint ID
++uint Name string
+diff --git a/Documentation/Bindings_434_cata/SpellDispelType.txt b/Documentation/Bindings_434_cata/SpellDispelType.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellDispelType.txt
+@@ -0,0 +1,7 @@
++# SpellDispelType.dbc structure for 4.3.4 15595 (Cataclysm)
++# Locale strings reduced to single-locale in Cata.
++uint ID
++uint Name string
++uint Unknown2
++uint Unknown3
++uint Unknown4
+diff --git a/Documentation/Bindings_434_cata/SpellMechanic.txt b/Documentation/Bindings_434_cata/SpellMechanic.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellMechanic.txt
+@@ -0,0 +1,4 @@
++# SpellMechanic.dbc structure for 4.3.4 15595 (Cataclysm)
++# Locale strings reduced to single-locale in Cata.
++uint ID
++uint Name string
+diff --git a/Documentation/Bindings_434_cata/SpellFocusObject.txt b/Documentation/Bindings_434_cata/SpellFocusObject.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellFocusObject.txt
+@@ -0,0 +1,4 @@
++# SpellFocusObject.dbc structure for 4.3.4 15595 (Cataclysm)
++# Locale strings reduced to single-locale in Cata.
++uint ID
++uint Name string
+diff --git a/Documentation/Bindings_434_cata/SpellRuneCost.txt b/Documentation/Bindings_434_cata/SpellRuneCost.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellRuneCost.txt
+@@ -0,0 +1,7 @@
++# SpellRuneCost.dbc structure for 4.3.4 15595 (Cataclysm)
++# Same structure as WotLK (5 columns, 20 bytes)
++uint ID
++uint Blood
++uint Unholy
++uint Frost
++uint RunicPower
+diff --git a/Documentation/Bindings_434_cata/SpellShapeshiftForm.txt b/Documentation/Bindings_434_cata/SpellShapeshiftForm.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellShapeshiftForm.txt
+@@ -0,0 +1,24 @@
++# SpellShapeshiftForm.dbc structure for 4.3.4 15595 (Cataclysm)
++# Locale strings reduced to single-locale. Structure otherwise similar to WotLK.
++uint ID
++uint Unknown1
++uint Unknown2
++uint Name string
++uint Unknown4
++uint CombatRoundTime
++uint CreatureType
++uint Icon
++uint AttackSpeed
++uint ModelID_A1
++uint ModelID_A2
++uint ModelID_H1
++uint ModelID_H2
++uint Unknown13
++uint Unknown14
++uint Unknown15
++uint Unknown16
++uint Unknown17
++uint Unknown18
++uint Unknown19
++uint Unknown20
+diff --git a/Documentation/Bindings_434_cata/SpellCategory.txt b/Documentation/Bindings_434_cata/SpellCategory.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellCategory.txt
+@@ -0,0 +1,7 @@
++# SpellCategory.dbc structure for 4.3.4 15595 (Cataclysm)
++# Note: this is the SpellCategory LOOKUP table, not SpellCategories sub-table.
++# 4 columns, record size 16 bytes
++uint ID
++uint Category
++uint Unknown2
++uint Unknown3
+diff --git a/Documentation/Bindings_434_cata/SpellDifficulty.txt b/Documentation/Bindings_434_cata/SpellDifficulty.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellDifficulty.txt
+@@ -0,0 +1,8 @@
++# SpellDifficulty.dbc structure for 4.3.4 15595 (Cataclysm)
++# Same structure as WotLK (5 columns, 20 bytes)
++uint ID
++uint Normal10
++uint Normal25
++uint Heroic10
++uint Heroic25
+diff --git a/Documentation/Bindings_434_cata/SpellDescriptionVariables.txt b/Documentation/Bindings_434_cata/SpellDescriptionVariables.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/SpellDescriptionVariables.txt
+@@ -0,0 +1,5 @@
++# SpellDescriptionVariables.dbc structure for 4.3.4 15595 (Cataclysm)
++# Same structure as WotLK (2 columns)
++# Contains formula variable definitions used in spell description strings.
++uint ID
++uint DescriptionVariables string
+diff --git a/Documentation/Bindings_434_cata/AreaTable.txt b/Documentation/Bindings_434_cata/AreaTable.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/AreaTable.txt
+@@ -0,0 +1,28 @@
++# AreaTable.dbc structure for 4.3.4 15595 (Cataclysm)
++# Locale strings reduced to single-locale in Cata.
++uint ID
++uint MapID
++uint ParentAreaID
++uint AreaBit
++uint Flags
++uint Unknown5
++uint Unknown6
++uint SoundPreferences
++uint UnderwaterSoundPreferences
++uint SoundAmbience
++uint ZoneMusic
++uint Name string
++uint AreaType
++uint Unknown13
++uint Unknown14
++uint FactionGroupMask
++float Unknown16
++float Unknown17
++uint LiquidTypeID1
++uint LiquidTypeID2
++uint LiquidTypeID3
++uint LiquidTypeID4
++uint Unknown22
++uint Unknown23
++uint Unknown24
+diff --git a/Documentation/Bindings_434_cata/CreatureType.txt b/Documentation/Bindings_434_cata/CreatureType.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/CreatureType.txt
+@@ -0,0 +1,5 @@
++# CreatureType.dbc structure for 4.3.4 15595 (Cataclysm)
++# Locale strings reduced to single-locale in Cata.
++uint ID
++uint Name string
++uint Unknown2
+diff --git a/Documentation/Bindings_434_cata/ItemClass.txt b/Documentation/Bindings_434_cata/ItemClass.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/ItemClass.txt
+@@ -0,0 +1,9 @@
++# ItemClass.dbc structure for 4.3.4 15595 (Cataclysm)
++# Format: dixxfx (6 columns)
++# Locale strings reduced to single-locale in Cata.
++uint ID
++uint SubclassMapID
++uint Unknown2
++uint Unknown3
++float PriceModifier
++uint Unknown5
+diff --git a/Documentation/Bindings_434_cata/AnimationData.txt b/Documentation/Bindings_434_cata/AnimationData.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/AnimationData.txt
+@@ -0,0 +1,9 @@
++# AnimationData.dbc structure for 4.3.4 15595 (Cataclysm)
++# Structure unchanged from WotLK.
++uint ID
++uint Name string
++uint WeaponFlags
++uint BodyFlags
++uint Flags
++uint Fallback
++uint BehaviorID
+diff --git a/Documentation/Bindings_434_cata/AreaGroup.txt b/Documentation/Bindings_434_cata/AreaGroup.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/AreaGroup.txt
+@@ -0,0 +1,11 @@
++# AreaGroup.dbc structure for 4.3.4 15595 (Cataclysm)
++# Format: niiiiiii (8 columns, 32 bytes)
++uint ID
++uint AreaID1
++uint AreaID2
++uint AreaID3
++uint AreaID4
++uint AreaID5
++uint AreaID6
++uint NextGroup
+diff --git a/Documentation/Bindings_434_cata/TotemCategory.txt b/Documentation/Bindings_434_cata/TotemCategory.txt
+new file mode 100644
+--- /dev/null
++++ b/Documentation/Bindings_434_cata/TotemCategory.txt
+@@ -0,0 +1,7 @@
++# TotemCategory.dbc structure for 4.3.4 15595 (Cataclysm)
++# Format: nxii (4 columns)
++# Locale strings reduced to single-locale in Cata.
++uint ID
++uint Name string
++uint TotemCategoryType
++uint TotemCategoryMask
+diff --git a/SpellGUIV2/Sources/VersionControl/WoWVersionManager.cs b/SpellGUIV2/Sources/VersionControl/WoWVersionManager.cs
+--- a/SpellGUIV2/Sources/VersionControl/WoWVersionManager.cs
++++ b/SpellGUIV2/Sources/VersionControl/WoWVersionManager.cs
+@@ -1,4 +1,5 @@
+ using System;
++using System.Linq;
+ using System.Collections.Generic;
+
+ namespace SpellEditor.Sources.VersionControl
+@@ -19,17 +20,22 @@
+             var vanilla = new WoWVersion() { Identity = 112, Name = "WoW 1.12.1", Version = "1.12.1", NumLocales = 8 };
+             var tbc = new WoWVersion() { Identity = 243, Name = "WoW 2.4.3", Version = "2.4.3", NumLocales = 15 };
+             // 3.3.5a actually has 15 locales and 1 flag but we load it like this for legacy backwards compatibility
+             var wotlk = new WoWVersion() { Identity = 335, Name = "WoW 3.3.5a 12340", Version = DefaultVersionString, NumLocales = 9 };
++            var cata = new WoWVersion() { Identity = 434, Name = "WoW 4.3.4 15595", Version = "4.3.4 15595", NumLocales = 1 };
+
+             var vanillaLookups = GenerateKeyResource(vanilla);
+             var tbcLookups = GenerateKeyResource(tbc);
+             var wotlkLookups = GenerateKeyResource(wotlk);
++            var cataLookups = GenerateKeyResource(cata);
+
+             _VersionList.Add(vanilla);
+             _VersionList.Add(tbc);
+             _VersionList.Add(wotlk);
++            _VersionList.Add(cata);
+
+             _KeyResourceLookup.Add(vanilla, vanillaLookups);
+             _KeyResourceLookup.Add(tbc, tbcLookups);
+             _KeyResourceLookup.Add(wotlk, wotlkLookups);
++            _KeyResourceLookup.Add(cata, cataLookups);
+         }
+
+         public static WoWVersionManager GetInstance() => _Instance;
+@@ -45,6 +51,8 @@
+
+         public static bool IsWotlkOrGreaterSelected => GetInstance().SelectedVersion().Identity >= 335;
+
++        public static bool IsCataOrGreaterSelected => GetInstance().SelectedVersion().Identity >= 434;
++
+         public static bool IsTbcOrGreaterSelected => GetInstance().SelectedVersion().Identity >= 243;
+
+         #region GenerateKeyResource strings
+@@ -103,6 +111,25 @@
+                             "WorldEffect"
+
+                         });
++                case 434:
++                    return new KeyResource(new string[]
++                        {
++                            "PrecastKit",
++                            "CastKit",
++                            "ImpactKit",
++                            "StateKit",
++                            "StateDoneKit",
++                            "ChannelKit",
++                            "InstantAreaKit",
++                            "ImpactAreaKit",
++                            "CasterImpactKit",
++                            "TargetImpactKit",
++                            "MissileTargetingKit",
++                            "PersistentAreaKit"
++                        },
++                        new string[]
++                        {
++                            "HeadEffect",
++                            "ChestEffect",
++                            "BaseEffect",
++                            "LeftHandEffect",
++                            "RightHandEffect",
++                            "BreathEffect",
++                            "LeftWeaponEffect",
++                            "RightWeaponEffect",
++                            "SpecialEffect1",
++                            "SpecialEffect2",
++                            "SpecialEffect3",
++                            "WorldEffect"
++                        });
+                 default:
+                     throw new Exception($"Unknown version identity [{version.Identity}] generating WoWVersionManager.KeyResource");
+             }

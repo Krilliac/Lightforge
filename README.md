@@ -1,8 +1,22 @@
 # Lightforge Engine
 
-A unified workspace for World of Warcraft modding, bringing 60+ community tools under one roof with project management, version-aware tool filtering, and a built-in file editor.
+[![Release](https://img.shields.io/github/v/release/Krilliac/Lightforge?style=flat-square)](https://github.com/Krilliac/Lightforge/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/Krilliac/Lightforge/total?style=flat-square)](https://github.com/Krilliac/Lightforge/releases)
+[![.NET](https://img.shields.io/badge/.NET-8.0-blue?style=flat-square)](https://dotnet.microsoft.com/download/dotnet/8.0)
+[![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
+
+A unified workspace for World of Warcraft modding, bringing 60+ community tools under one roof with project management, version-aware tool filtering, and a built-in file editor. Includes a CLI for scripting and automation.
 
 ![Lightforge welcome screen](docs/screenshots/main-window.png)
+
+## Download
+
+**[Download Latest Release](https://github.com/Krilliac/Lightforge/releases/latest)** -- Pre-built binaries for Windows.
+
+- `Lightforge-v2.0.0-gui.zip` -- GUI application (WinForms)
+- `Lightforge-v2.0.0-cli.zip` -- Command-line tool
+
+Both require the [.NET 8 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0/runtime).
 
 ## What It Does
 
@@ -13,6 +27,7 @@ Lightforge organizes the scattered landscape of WoW modding tools into a single 
 - **Project system** -- Create workspaces with organized folders (Maps, DBCs, Models, Textures, Patches, SQL, Lua, Exports, Config). Projects remember their target expansion, client path, and recent files.
 - **63 tools, 8 WoW versions** -- Covers Vanilla 1.12.1 through BfA 8.3.7. Tools are filtered live by the selected expansion so you never launch something incompatible.
 - **Built-in file editor** -- Tabbed editor with syntax highlighting for SQL, Lua, XML, GLSL, and config files. Supports find-in-files (Ctrl+Shift+F) across your entire project.
+- **CLI for automation** -- List, search, and launch tools from the command line. Create projects, validate tool installations, and export JSON for scripting.
 - **Tool status at a glance** -- Each tool card shows its maintenance status (Active, Maintained, Stable, Stale, Archived) with color-coded indicators, plus right-click context menus for opening source repos, containing folders, or launching directly.
 - **Drag-and-drop** -- Drop files onto the project tree to import them into the right folder.
 - **Build system** -- One-click "Build Patch" creates a ZIP of your project's output, ready for distribution.
@@ -22,14 +37,14 @@ Lightforge organizes the scattered landscape of WoW modding tools into a single 
 
 | Version | Build | Archive Format | Tool Count |
 |---------|-------|----------------|------------|
-| Vanilla 1.12.1 | 5875 | MPQ | 30+ |
-| TBC 2.4.3 | 8606 | MPQ | 30+ |
-| WotLK 3.3.5a | 12340 | MPQ | 50+ |
-| Cata 4.3.4 | 15595 | MPQ | 25+ |
-| MoP 5.4.8 | 18414 | MPQ | 20+ |
-| WoD 6.2.4 | 21742 | CASC | 15+ |
-| Legion 7.3.5 | 26972 | CASC | 15+ |
-| BfA 8.3.7 | 35662 | CASC | 15+ |
+| Vanilla 1.12.1 | 5875 | MPQ | 52 |
+| TBC 2.4.3 | 8606 | MPQ | 51 |
+| WotLK 3.3.5a | 12340 | MPQ | 64 |
+| Cata 4.3.4 | 15595 | MPQ | 29 |
+| MoP 5.4.8 | 18414 | MPQ | 27 |
+| WoD 6.2.4 | 21742 | CASC | 25 |
+| Legion 7.3.5 | 26972 | CASC | 27 |
+| BfA 8.3.7 | 35662 | CASC | 26 |
 
 The version selector in the toolbar filters the tool panel to show only compatible tools. Select "All Versions" to see everything.
 
@@ -52,6 +67,80 @@ The version selector in the toolbar filters the tool panel to show only compatib
 
 See [SOURCES.md](SOURCES.md) for the complete catalog with source links and version compatibility.
 
+## Command Line Interface
+
+The `lightforge` CLI provides terminal access to the full tool catalog.
+
+```
+$ lightforge
+lightforge - WoW modding tool launcher CLI
+
+Usage: lightforge <command> [options]
+
+Commands:
+  tools                 List all registered tools (filter by version/category)
+  search <query>        Search tools by name or description
+  launch <name>         Launch a tool by name
+  new <name> [path]     Create a new modding project
+  info [project]        Show project details
+  versions              List all supported WoW versions
+  validate [path]       Check which tools have executables present
+  help [command]        Show detailed help for a command
+
+73 tools registered, Vanilla 1.12.1 through BfA 8.3.7
+```
+
+### Examples
+
+List tools for a specific expansion:
+
+```
+$ lightforge tools --version wotlk --compact
+Noggit3                      WORLD EDITING    Vanilla, TBC, WotLK
+WDBXEditor                   DATA EDITING     Vanilla, TBC, WotLK, Cata, MoP, WoD, Legion, BfA
+Spell Editor V2              DATA EDITING     Vanilla, TBC, WotLK
+MPQ Editor                   PACKAGING        Vanilla, TBC, WotLK, Cata, MoP
+...
+```
+
+Search tools:
+
+```
+$ lightforge search mpq
+● MPQ Editor                PACKAGING        MPQ archive editor
+  http://www.zezula.net/en/mpq/download.html
+  Versions: Vanilla, TBC, WotLK, Cata, MoP
+● mpqcli                    PACKAGING        Command-line MPQ archiver
+  https://github.com/TheGrayDot/mpqcli
+  Versions: Vanilla, TBC, WotLK, Cata, MoP
+```
+
+Show version coverage:
+
+```
+$ lightforge versions
+  Supported WoW Versions
+
+  Version              Build    Format Tools
+  Vanilla 1.12.1       5875     MPQ    52
+  TBC 2.4.3            8606     MPQ    51
+  WotLK 3.3.5a         12340    MPQ    64
+  Cata 4.3.4           15595    MPQ    29
+  MoP 5.4.8            18414    MPQ    27
+  WoD 6.2.4            21742    CASC   25
+  Legion 7.3.5         26972    CASC   27
+  BfA 8.3.7            35662    CASC   26
+
+  73 total tools registered
+```
+
+Export as JSON for scripting:
+
+```bash
+lightforge tools --json > tools.json
+lightforge tools --version wotlk --category "DATA EDITING" --json
+```
+
 ## Building
 
 **Requirements:** .NET 8 SDK, Windows 10/11
@@ -60,7 +149,12 @@ See [SOURCES.md](SOURCES.md) for the complete catalog with source links and vers
 dotnet build Lightforge.sln -c Release
 ```
 
-The output lands in `Lightforge/bin/Release/net8.0-windows/`. Run `Lightforge.exe` from there.
+This builds both the GUI and CLI:
+
+| Output | Path |
+|--------|------|
+| GUI | `Lightforge/bin/Release/net8.0-windows/Lightforge.exe` |
+| CLI | `Lightforge.CLI/bin/Release/net8.0/lightforge.exe` |
 
 To have tools available, place their executables under a `Toolset Binaries` folder next to the executable, matching the paths defined in `WowToolRegistry.cs`.
 
@@ -74,6 +168,9 @@ Lightforge/
     WowToolRegistry.cs     # Tool catalog with version compatibility model
     LightforgeProject.cs   # Project create/open/save and recent projects
     Lightforge.csproj      # .NET 8 WinForms project file
+  Lightforge.CLI/
+    Program.cs             # CLI entry point and commands
+    Lightforge.CLI.csproj  # Console app (links shared source files)
   patches/                 # Version-extension patches for upstream tools
   docs/                    # Documentation and screenshots
   SOURCES.md               # Complete tool source catalog

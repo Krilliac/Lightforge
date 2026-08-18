@@ -9,6 +9,8 @@ A unified workspace for World of Warcraft modding, bringing 60+ community tools 
 
 ![Lightforge welcome screen](docs/screenshots/main-window.png)
 
+![Workspace with tools panel](docs/screenshots/workspace.png)
+
 ## Download
 
 **[Download Latest Release](https://github.com/Krilliac/Lightforge/releases/latest)** -- Pre-built binaries for Windows.

@@ -183,7 +183,15 @@ This builds both the GUI and CLI:
 | GUI | `Lightforge/bin/Release/net8.0-windows/Lightforge.exe` |
 | CLI | `Lightforge.CLI/bin/Release/net8.0/lightforge.exe` |
 
-To have tools available, place their executables under a `Toolset Binaries` folder next to the executable, matching the paths defined in `WowToolRegistry.cs`.
+To have tools available, run the built-in setup command to auto-download from GitHub releases:
+
+```bash
+lightforge setup              # download all available tools
+lightforge setup --list       # see what's available vs installed
+lightforge setup -t Noggit3   # download a specific tool
+```
+
+24 tools have automated downloads configured. For tools without releases, place their executables under a `Toolset Binaries` folder next to the executable, matching the paths defined in `WowToolRegistry.cs`.
 
 ## Project Structure
 

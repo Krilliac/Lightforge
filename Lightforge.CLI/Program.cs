@@ -29,6 +29,7 @@ static class Program
             "adt-info" => AdtTool.Info(sub),
             "listfile" => ListfileTool.Search(sub),
             "sql-gen" => SqlGenTool.Generate(sub),
+            "setup" => SetupTool.Run(sub),
             "help" or "--help" or "-h" => ShowHelp(args.Skip(1).FirstOrDefault()),
             "version" or "--version" or "-v" => ShowVersion(),
             _ => UnknownCommand(args[0])
@@ -60,6 +61,7 @@ static class Program
         PrintCommand("adt-info <file>", "Inspect ADT map tile chunks and assets");
         PrintCommand("listfile <pattern>", "Search the community listfile for assets");
         PrintCommand("sql-gen [template]", "Generate SQL templates for WoW databases");
+        PrintCommand("setup [--list]", "Download tool binaries from GitHub releases");
 
         Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine();

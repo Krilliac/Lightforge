@@ -20,9 +20,11 @@ static class Program
             "search" => SearchTools(sub),
             "launch" => LaunchTool(sub),
             "new" => NewProject(sub),
+            "new-addon" => AddonTool.Run(sub),
             "info" => ProjectInfo(sub),
             "versions" => ListVersions(),
             "validate" => ValidateTools(sub),
+            "check-updates" => UpdateTool.Run(sub),
             "dbc-info" => DbcTool.Info(sub),
             "dbc-diff" => DbcTool.Diff(sub),
             "blp-info" => BlpTool.Info(sub),
@@ -51,6 +53,8 @@ static class Program
         PrintCommand("info [project]", "Show project details");
         PrintCommand("versions", "List all supported WoW versions");
         PrintCommand("validate [path]", "Check which tools have executables present");
+        PrintCommand("new-addon <name>", "Generate a WoW addon skeleton (TOC, Lua, XML)");
+        PrintCommand("check-updates", "Compare installed tools against latest releases");
 
         Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine("\n  Lightforge Tools:");
@@ -274,12 +278,35 @@ static class Program
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("Usage: lightforge new <name> [parent-directory]");
+            Console.Error.WriteLine("Usage: lightforge new <name> [parent-directory] [--template <name>]");
+            Console.Error.WriteLine("\nTemplates:");
+            foreach (var t in ProjectTemplates.All)
+            {
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.Error.Write($"  {t.Id,-16}");
+                Console.ResetColor();
+                Console.Error.WriteLine(t.Description);
+            }
             return 1;
         }
 
         var name = args[0];
-        var parentDir = args.Length > 1 ? args[1] : Directory.GetCurrentDirectory();
+        var parentDir = Directory.GetCurrentDirectory();
+        string? templateId = null;
+
+        for (int i = 1; i < args.Length; i++)
+        {
+            switch (args[i].ToLowerInvariant())
+            {
+                case "--template" or "-t" when i + 1 < args.Length:
+                    templateId = args[++i];
+                    break;
+                default:
+                    if (!args[i].StartsWith("-"))
+                        parentDir = args[i];
+                    break;
+            }
+        }
 
         if (!Directory.Exists(parentDir))
         {
@@ -295,10 +322,34 @@ static class Program
         }
 
         var project = LightforgeProject.Create(parentDir, name);
-        Console.ForegroundColor = ConsoleColor.Green;
-        Console.Write("Created");
-        Console.ResetColor();
-        Console.WriteLine($" project \"{name}\" at {project.ProjectDir}\n");
+
+        if (templateId != null)
+        {
+            var template = ProjectTemplates.All
+                .FirstOrDefault(t => t.Id.Equals(templateId, StringComparison.OrdinalIgnoreCase));
+            if (template == null)
+            {
+                Console.Error.WriteLine($"Unknown template: {templateId}");
+                Console.Error.WriteLine("Available: " + string.Join(", ", ProjectTemplates.All.Select(t => t.Id)));
+                return 1;
+            }
+            template.Apply(project.ProjectDir);
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.Write("Created");
+            Console.ResetColor();
+            Console.Write($" project \"{name}\" from template ");
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.Write(template.Name);
+            Console.ResetColor();
+            Console.WriteLine($" at {project.ProjectDir}\n");
+        }
+        else
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.Write("Created");
+            Console.ResetColor();
+            Console.WriteLine($" project \"{name}\" at {project.ProjectDir}\n");
+        }
 
         Console.WriteLine("Folders:");
         foreach (var folder in LightforgeProject.Folders)

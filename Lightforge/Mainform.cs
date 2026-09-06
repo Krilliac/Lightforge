@@ -859,6 +859,47 @@ public partial class Mainform : Form
             inner.Controls.Add(cardFlow);
         }
 
+        if (_project?.FavoriteTools.Count > 0)
+        {
+            var pinLabel = new Label
+            {
+                Text = "★  PINNED",
+                Font = Theme.SectionHead,
+                ForeColor = Theme.Gold,
+                BackColor = Color.FromArgb(30, 30, 30),
+                Size = new Size(600, 28),
+                TextAlign = ContentAlignment.MiddleLeft,
+                Padding = new Padding(8, 0, 0, 0),
+                Margin = new Padding(0, 6, 0, 2)
+            };
+            pinLabel.Paint += (_, e) =>
+            {
+                using var pen = new Pen(Theme.Gold, 1);
+                e.Graphics.DrawLine(pen, 0, 27, pinLabel.Width, 27);
+            };
+            inner.Controls.Add(pinLabel);
+
+            var pinFlow = new FlowLayoutPanel
+            {
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = true,
+                Size = new Size(600, 60),
+                Margin = new Padding(0, 0, 0, 8),
+                BackColor = Theme.BgDeep
+            };
+            var allTools = WowToolRegistry.GetAllTools();
+            foreach (var favName in _project.FavoriteTools)
+            {
+                var tool = allTools.FirstOrDefault(t =>
+                    t.Name.Equals(favName, StringComparison.OrdinalIgnoreCase));
+                if (tool != null)
+                    pinFlow.Controls.Add(MakeToolCard(tool));
+                else
+                    pinFlow.Controls.Add(MakeToolCard(favName, "Pinned", favName));
+            }
+            inner.Controls.Add(pinFlow);
+        }
+
         if (_recentTools.Count > 0)
         {
             var recentLabel = new Label
@@ -1290,6 +1331,22 @@ public partial class Mainform : Form
         };
 
         menu.Items.Add($"Launch {tool.Name}", null, (_, _) => LaunchTool(tool.RelativePath));
+
+        if (_project != null)
+        {
+            bool isPinned = _project.FavoriteTools.Contains(tool.Name);
+            menu.Items.Add(isPinned ? "★ Unpin from Favorites" : "☆ Pin to Favorites", null, (_, _) =>
+            {
+                if (isPinned)
+                    _project.FavoriteTools.Remove(tool.Name);
+                else
+                    _project.FavoriteTools.Add(tool.Name);
+                _project.Save();
+                PopulateToolPanel();
+                Log(isPinned ? $"[Pin] Unpinned {tool.Name}" : $"[Pin] Pinned {tool.Name}");
+            });
+        }
+
         menu.Items.Add(new ToolStripSeparator());
 
         if (!string.IsNullOrEmpty(tool.Source))
@@ -1403,6 +1460,50 @@ public partial class Mainform : Form
             if (_buildProgress != null) _buildProgress.Value = copied;
         }
 
+        bool useMpq = WowVersionInfo.UsesMpq(_selectedVersion);
+        if (useMpq)
+        {
+            var mpqcliPath = FindMpqCli();
+            if (mpqcliPath != null)
+            {
+                var mpqName = $"patch-{_project.Name.Replace(" ", "")}.mpq";
+                var mpqPath = Path.Combine(dataDir, mpqName);
+                Log($"[Build] Packing {copied} file(s) into MPQ: {mpqName}");
+                _statusLabel.Text = $"Building MPQ archive...";
+                try
+                {
+                    var psi = new ProcessStartInfo(mpqcliPath)
+                    {
+                        Arguments = $"create \"{mpqPath}\" \"{patchDir}\"",
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        CreateNoWindow = true
+                    };
+                    using var proc = Process.Start(psi);
+                    if (proc != null)
+                    {
+                        var output = proc.StandardOutput.ReadToEnd();
+                        proc.WaitForExit(30000);
+                        if (proc.ExitCode == 0)
+                            Log($"[Build] MPQ created: {mpqName}");
+                        else
+                            Log($"[Build] MPQ warning: mpqcli exited with code {proc.ExitCode}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log($"[Build] MPQ packing failed: {ex.Message}");
+                    Log("[Build] Files were still deployed individually.");
+                }
+            }
+            else
+            {
+                Log("[Build] mpqcli not found — files deployed as loose files.");
+                Log("[Build] Install mpqcli via 'lightforge setup -t mpqcli' for MPQ packing.");
+            }
+        }
+
         var sqlDir = Path.Combine(_project.ProjectDir, "SQL");
         if (Directory.Exists(sqlDir))
         {
@@ -1453,7 +1554,7 @@ public partial class Mainform : Form
         var inputDlg = new Form
         {
             Text = "New Project",
-            Size = new Size(380, 160),
+            Size = new Size(420, 280),
             StartPosition = FormStartPosition.CenterParent,
             FormBorderStyle = FormBorderStyle.FixedDialog,
             MaximizeBox = false,
@@ -1467,15 +1568,48 @@ public partial class Mainform : Form
         {
             Text = name,
             Location = new Point(12, 40),
-            Width = 340,
+            Width = 380,
             BackColor = Theme.BgInput,
             ForeColor = Theme.TextBright,
             BorderStyle = BorderStyle.FixedSingle
         };
+
+        var templateLbl = new Label { Text = "Template:", Location = new Point(12, 76), AutoSize = true };
+        var templateBox = new ComboBox
+        {
+            Location = new Point(12, 98),
+            Width = 380,
+            BackColor = Theme.BgInput,
+            ForeColor = Theme.TextBright,
+            FlatStyle = FlatStyle.Flat,
+            DropDownStyle = ComboBoxStyle.DropDownList
+        };
+        templateBox.Items.Add("(Blank Project)");
+        foreach (var t in ProjectTemplates.All)
+            templateBox.Items.Add($"{t.Name} — {t.Description}");
+        templateBox.SelectedIndex = 0;
+
+        var templateDesc = new Label
+        {
+            Text = "Empty project with standard folder structure.",
+            Font = Theme.Small,
+            ForeColor = Theme.TextDim,
+            Location = new Point(12, 130),
+            Size = new Size(380, 40)
+        };
+        templateBox.SelectedIndexChanged += (_, _) =>
+        {
+            if (templateBox.SelectedIndex == 0)
+                templateDesc.Text = "Empty project with standard folder structure.";
+            else
+                templateDesc.Text = ProjectTemplates.All[templateBox.SelectedIndex - 1].Description +
+                    $"\nDefault expansion: {ProjectTemplates.All[templateBox.SelectedIndex - 1].Expansion}";
+        };
+
         var ok = new Button
         {
             Text = "Create",
-            Location = new Point(270, 78),
+            Location = new Point(310, 195),
             Size = new Size(82, 30),
             BackColor = Theme.Accent,
             ForeColor = Color.White,
@@ -1483,7 +1617,7 @@ public partial class Mainform : Form
             DialogResult = DialogResult.OK
         };
 
-        inputDlg.Controls.AddRange([lbl, txt, ok]);
+        inputDlg.Controls.AddRange([lbl, txt, templateLbl, templateBox, templateDesc, ok]);
         inputDlg.AcceptButton = ok;
 
         if (inputDlg.ShowDialog() != DialogResult.OK) return;
@@ -1491,6 +1625,17 @@ public partial class Mainform : Form
         if (string.IsNullOrEmpty(name)) return;
 
         _project = LightforgeProject.Create(dlg.SelectedPath, name);
+
+        if (templateBox.SelectedIndex > 0)
+        {
+            var template = ProjectTemplates.All[templateBox.SelectedIndex - 1];
+            template.Apply(_project.ProjectDir);
+            _project.Template = template.Id;
+            _project.Expansion = template.Expansion;
+            _project.Save();
+            Log($"[Project] Created from template: {template.Name}");
+        }
+
         RecentProjects.Add(_project.ProjectFile, _project.Name);
         OpenProjectWorkspace();
     }
@@ -1786,9 +1931,22 @@ public partial class Mainform : Form
             return;
         }
 
+        if (ext == ".dbc" || ext == ".db2")
+        {
+            OpenDbcViewer(filePath);
+            Log($"[DBC] Opened {Path.GetFileName(filePath)} in built-in viewer");
+            return;
+        }
+
+        if (ext == ".adt")
+        {
+            OpenAdtPreview(filePath);
+            Log($"[ADT] Opened heightmap for {Path.GetFileName(filePath)}");
+            return;
+        }
+
         var toolPath = ext switch
         {
-            ".dbc" => @"WDBXEditor\WDBXEditor",
             ".mpq" => @"MPQEditor\MPQEditor",
             ".m2" or ".wmo" => @"WMVx\WMVx",
             ".blp" => @"BLPLab\BLP Lab",
@@ -2650,10 +2808,12 @@ public partial class Mainform : Form
             ("Ctrl+W", "Close Editor Tab"),
             ("", ""),
             ("Double-click .sql/.lua/.txt", "Open in Editor"),
-            ("Double-click .dbc", "Open in WDBXEditor"),
+            ("Double-click .dbc", "Open in DBC Viewer"),
+            ("Double-click .adt", "Open ADT Heightmap"),
             ("Double-click .mpq", "Open in MPQ Editor"),
             ("Double-click .m2/.wmo", "Open in WMVx"),
             ("Double-click .blp", "Open in BLP Lab"),
+            ("Right-click tool", "Pin/Unpin Favorite"),
         };
 
         int y = 14;
@@ -2853,6 +3013,415 @@ public partial class Mainform : Form
             "Lightforge",
             MessageBoxButtons.OK,
             MessageBoxIcon.Warning);
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  Built-in DBC Viewer
+    // ═══════════════════════════════════════════════════════
+
+    private void OpenDbcViewer(string filePath)
+    {
+        if (_openEditors.ContainsKey(filePath))
+        {
+            ActivateEditorTab(filePath);
+            SwitchToTab(_editorPanel);
+            return;
+        }
+
+        var grid = new DataGridView
+        {
+            Dock = DockStyle.Fill,
+            BackgroundColor = Color.FromArgb(30, 30, 30),
+            ForeColor = Theme.TextBright,
+            GridColor = Theme.Border,
+            Font = Theme.Mono,
+            BorderStyle = BorderStyle.None,
+            ReadOnly = true,
+            AllowUserToAddRows = false,
+            AllowUserToDeleteRows = false,
+            RowHeadersVisible = false,
+            AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None,
+            ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
+            {
+                BackColor = Theme.BgDark,
+                ForeColor = Theme.Gold,
+                Font = Theme.SectionHead,
+                SelectionBackColor = Theme.BgDark,
+                Alignment = DataGridViewContentAlignment.MiddleCenter
+            },
+            DefaultCellStyle = new DataGridViewCellStyle
+            {
+                BackColor = Color.FromArgb(30, 30, 30),
+                ForeColor = Theme.TextNorm,
+                SelectionBackColor = Theme.BgSelected,
+                SelectionForeColor = Color.White
+            },
+            AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle
+            {
+                BackColor = Color.FromArgb(36, 36, 36),
+                ForeColor = Theme.TextNorm,
+                SelectionBackColor = Theme.BgSelected,
+                SelectionForeColor = Color.White
+            },
+            EnableHeadersVisualStyles = false,
+            Visible = false
+        };
+
+        try
+        {
+            using var fs = File.OpenRead(filePath);
+            using var br = new BinaryReader(fs);
+
+            if (fs.Length < 20)
+            {
+                Log($"[DBC] File too small: {Path.GetFileName(filePath)}");
+                return;
+            }
+
+            var magic = br.ReadUInt32();
+            var recordCount = br.ReadUInt32();
+            var fieldCount = br.ReadUInt32();
+            var recordSize = br.ReadUInt32();
+            var stringBlockSize = br.ReadUInt32();
+
+            var fieldsPerRecord = (int)(recordSize / 4);
+            var headerSize = 20u;
+
+            for (int col = 0; col < fieldsPerRecord; col++)
+            {
+                grid.Columns.Add($"F{col}", $"Field {col}");
+                grid.Columns[col].Width = 80;
+            }
+
+            var stringBlockOffset = headerSize + recordCount * recordSize;
+            byte[]? stringBlock = null;
+            if (stringBlockSize > 0 && stringBlockOffset + stringBlockSize <= fs.Length)
+            {
+                var savedPos = fs.Position;
+                fs.Position = stringBlockOffset;
+                stringBlock = br.ReadBytes((int)stringBlockSize);
+                fs.Position = savedPos;
+            }
+
+            fs.Position = headerSize;
+            for (uint row = 0; row < recordCount && row < 10000; row++)
+            {
+                var values = new string[fieldsPerRecord];
+                for (int col = 0; col < fieldsPerRecord; col++)
+                {
+                    var val = br.ReadUInt32();
+                    if (stringBlock != null && val < stringBlockSize && val > 0)
+                    {
+                        var strEnd = Array.IndexOf(stringBlock, (byte)0, (int)val);
+                        if (strEnd > (int)val && strEnd - (int)val < 256)
+                        {
+                            var str = System.Text.Encoding.UTF8.GetString(
+                                stringBlock, (int)val, strEnd - (int)val);
+                            if (str.All(c => !char.IsControl(c) || c == '\n'))
+                            {
+                                values[col] = $"\"{str}\"";
+                                continue;
+                            }
+                        }
+                    }
+                    values[col] = val.ToString();
+                }
+                grid.Rows.Add(values);
+            }
+
+            _statusLabel.Text = $"DBC: {recordCount} records, {fieldsPerRecord} fields  |  {Path.GetFileName(filePath)}";
+        }
+        catch (Exception ex)
+        {
+            Log($"[DBC] Error reading {Path.GetFileName(filePath)}: {ex.Message}");
+            return;
+        }
+
+        var (tabPanel, nameLabel, closeBtn) = MakeEditorTab(filePath);
+        _editorTabBar.Controls.Add(tabPanel);
+        _editorPanel.Controls.Add(grid);
+        _openEditors[filePath] = (tabPanel, null!);
+
+        grid.Tag = "dbc-viewer";
+
+        closeBtn.Click += (_, _) =>
+        {
+            _editorPanel.Controls.Remove(grid);
+            _editorTabBar.Controls.Remove(tabPanel);
+            grid.Dispose();
+            tabPanel.Dispose();
+            _openEditors.Remove(filePath);
+            int x = 0;
+            foreach (Control c in _editorTabBar.Controls) { c.Left = x; x += 144; }
+            if (_openEditors.Count > 0) ActivateEditorTab(_openEditors.Keys.Last());
+        };
+
+        EventHandler activateHandler = (_, _) =>
+        {
+            foreach (var (_, (t, _)) in _openEditors) t.BackColor = Color.FromArgb(30, 30, 30);
+            tabPanel.BackColor = Theme.BgDeep;
+            foreach (Control c in _editorPanel.Controls)
+            {
+                if (c is DataGridView || c is RichTextBox) c.Visible = false;
+            }
+            grid.Visible = true;
+            grid.BringToFront();
+        };
+        nameLabel.Click += activateHandler;
+        tabPanel.Click += activateHandler;
+
+        foreach (var (_, (t, _)) in _openEditors) t.BackColor = Color.FromArgb(30, 30, 30);
+        tabPanel.BackColor = Theme.BgDeep;
+        foreach (Control c in _editorPanel.Controls)
+        {
+            if (c is DataGridView || c is RichTextBox) c.Visible = false;
+        }
+        grid.Visible = true;
+        grid.BringToFront();
+        SwitchToTab(_editorPanel);
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  ADT Heightmap Preview
+    // ═══════════════════════════════════════════════════════
+
+    private void OpenAdtPreview(string filePath)
+    {
+        if (_openEditors.ContainsKey(filePath))
+        {
+            ActivateEditorTab(filePath);
+            SwitchToTab(_editorPanel);
+            return;
+        }
+
+        Bitmap? heightmap = null;
+        try
+        {
+            heightmap = RenderAdtHeightmap(filePath);
+        }
+        catch (Exception ex)
+        {
+            Log($"[ADT] Error rendering heightmap: {ex.Message}");
+            return;
+        }
+
+        if (heightmap == null)
+        {
+            Log($"[ADT] No height data found in {Path.GetFileName(filePath)}");
+            return;
+        }
+
+        var preview = new PictureBox
+        {
+            Dock = DockStyle.Fill,
+            Image = heightmap,
+            SizeMode = PictureBoxSizeMode.Zoom,
+            BackColor = Color.FromArgb(30, 30, 30),
+            Visible = false
+        };
+
+        var (tabPanel, nameLabel, closeBtn) = MakeEditorTab(filePath);
+        _editorTabBar.Controls.Add(tabPanel);
+        _editorPanel.Controls.Add(preview);
+        _openEditors[filePath] = (tabPanel, null!);
+
+        closeBtn.Click += (_, _) =>
+        {
+            _editorPanel.Controls.Remove(preview);
+            _editorTabBar.Controls.Remove(tabPanel);
+            heightmap.Dispose();
+            preview.Dispose();
+            tabPanel.Dispose();
+            _openEditors.Remove(filePath);
+            int x = 0;
+            foreach (Control c in _editorTabBar.Controls) { c.Left = x; x += 144; }
+            if (_openEditors.Count > 0) ActivateEditorTab(_openEditors.Keys.Last());
+        };
+
+        EventHandler adtActivateHandler = (_, _) =>
+        {
+            foreach (var (_, (t, _)) in _openEditors) t.BackColor = Color.FromArgb(30, 30, 30);
+            tabPanel.BackColor = Theme.BgDeep;
+            foreach (Control c in _editorPanel.Controls)
+            {
+                if (c is DataGridView || c is PictureBox || c is RichTextBox) c.Visible = false;
+            }
+            preview.Visible = true;
+            preview.BringToFront();
+        };
+        nameLabel.Click += adtActivateHandler;
+        tabPanel.Click += adtActivateHandler;
+
+        foreach (var (_, (t, _)) in _openEditors) t.BackColor = Color.FromArgb(30, 30, 30);
+        tabPanel.BackColor = Theme.BgDeep;
+        foreach (Control c in _editorPanel.Controls)
+        {
+            if (c is DataGridView || c is PictureBox || c is RichTextBox) c.Visible = false;
+        }
+        preview.Visible = true;
+        preview.BringToFront();
+        SwitchToTab(_editorPanel);
+
+        _statusLabel.Text = $"ADT Heightmap: {heightmap.Width}x{heightmap.Height}  |  {Path.GetFileName(filePath)}";
+    }
+
+    private static Bitmap? RenderAdtHeightmap(string filePath)
+    {
+        using var fs = File.OpenRead(filePath);
+        using var br = new BinaryReader(fs);
+
+        var heights = new float[256 * (9 * 9 + 8 * 8)];
+        int chunkIndex = 0;
+        bool foundAny = false;
+
+        while (fs.Position + 8 <= fs.Length)
+        {
+            var chunkId = br.ReadBytes(4);
+            Array.Reverse(chunkId);
+            var chunkName = System.Text.Encoding.ASCII.GetString(chunkId);
+            var chunkSize = br.ReadUInt32();
+            var chunkEnd = fs.Position + chunkSize;
+
+            if (chunkName == "MCNK" && chunkIndex < 256)
+            {
+                var mcnkStart = fs.Position;
+                if (chunkSize >= 128)
+                {
+                    fs.Position = mcnkStart + 104;
+                    var mcvtOffset = br.ReadUInt32();
+
+                    if (mcvtOffset > 0 && mcnkStart + mcvtOffset + 8 <= chunkEnd)
+                    {
+                        fs.Position = mcnkStart + mcvtOffset;
+                        var subId = br.ReadBytes(4);
+                        Array.Reverse(subId);
+                        var subName = System.Text.Encoding.ASCII.GetString(subId);
+                        var subSize = br.ReadUInt32();
+
+                        if (subName == "MCVT" && subSize >= (9 * 9 + 8 * 8) * 4)
+                        {
+                            int baseIdx = chunkIndex * (9 * 9 + 8 * 8);
+                            for (int i = 0; i < 9 * 9 + 8 * 8; i++)
+                                heights[baseIdx + i] = br.ReadSingle();
+                            foundAny = true;
+                        }
+                    }
+                }
+                chunkIndex++;
+            }
+
+            if (fs.Position != chunkEnd)
+                fs.Position = Math.Min(chunkEnd, fs.Length);
+        }
+
+        if (!foundAny) return null;
+
+        float minH = float.MaxValue, maxH = float.MinValue;
+        for (int i = 0; i < heights.Length; i++)
+        {
+            if (heights[i] != 0 || i < chunkIndex * (9 * 9 + 8 * 8))
+            {
+                if (heights[i] < minH) minH = heights[i];
+                if (heights[i] > maxH) maxH = heights[i];
+            }
+        }
+
+        float range = maxH - minH;
+        if (range < 0.01f) range = 1f;
+
+        int imgSize = 16 * 9;
+        var bmp = new Bitmap(imgSize, imgSize);
+
+        for (int cy = 0; cy < 16; cy++)
+        {
+            for (int cx = 0; cx < 16; cx++)
+            {
+                int ci = cy * 16 + cx;
+                if (ci >= chunkIndex) continue;
+
+                int baseIdx = ci * (9 * 9 + 8 * 8);
+                for (int ly = 0; ly < 9; ly++)
+                {
+                    for (int lx = 0; lx < 9; lx++)
+                    {
+                        float h = heights[baseIdx + ly * 9 + lx];
+                        int gray = (int)(((h - minH) / range) * 255);
+                        gray = Math.Clamp(gray, 0, 255);
+
+                        int px = cx * 9 + lx;
+                        int py = cy * 9 + ly;
+                        if (px < imgSize && py < imgSize)
+                            bmp.SetPixel(px, py, Color.FromArgb(gray, gray, gray));
+                    }
+                }
+            }
+        }
+
+        return bmp;
+    }
+
+    private (Panel tab, Label name, Label close) MakeEditorTab(string filePath)
+    {
+        var tabLabel = new Panel
+        {
+            Height = 24,
+            Width = 140,
+            BackColor = Theme.BgDeep,
+            Cursor = Cursors.Hand
+        };
+        var nameLabel = new Label
+        {
+            Text = Path.GetFileName(filePath),
+            Font = Theme.Small,
+            ForeColor = Theme.TextBright,
+            Location = new Point(6, 4),
+            AutoSize = true,
+            BackColor = Color.Transparent,
+            Cursor = Cursors.Hand
+        };
+        var closeBtn = new Label
+        {
+            Text = "x",
+            Font = Theme.Small,
+            ForeColor = Theme.TextMuted,
+            Size = new Size(18, 24),
+            TextAlign = ContentAlignment.MiddleCenter,
+            Dock = DockStyle.Right,
+            Cursor = Cursors.Hand
+        };
+        closeBtn.MouseEnter += (_, _) => closeBtn.ForeColor = Theme.Error;
+        closeBtn.MouseLeave += (_, _) => closeBtn.ForeColor = Theme.TextMuted;
+
+        tabLabel.Controls.Add(nameLabel);
+        tabLabel.Controls.Add(closeBtn);
+        tabLabel.Left = _editorTabBar.Controls.Count * 144;
+        return (tabLabel, nameLabel, closeBtn);
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  MPQ CLI Helper
+    // ═══════════════════════════════════════════════════════
+
+    private static string? FindMpqCli()
+    {
+        var toolsDir = Path.Combine(AppContext.BaseDirectory, "Toolset Binaries");
+        var mpqcliDir = Path.Combine(toolsDir, "mpqcli");
+
+        if (Directory.Exists(mpqcliDir))
+        {
+            var exe = Directory.GetFiles(mpqcliDir, "mpqcli*", SearchOption.AllDirectories)
+                .FirstOrDefault(f => f.EndsWith(".exe", StringComparison.OrdinalIgnoreCase));
+            if (exe != null) return exe;
+        }
+
+        var pathDirs = Environment.GetEnvironmentVariable("PATH")?.Split(';') ?? [];
+        foreach (var dir in pathDirs)
+        {
+            var candidate = Path.Combine(dir, "mpqcli.exe");
+            if (File.Exists(candidate)) return candidate;
+        }
+
+        return null;
     }
 }
 

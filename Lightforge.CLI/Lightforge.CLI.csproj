@@ -12,6 +12,7 @@
   <ItemGroup>
     <Compile Include="..\Lightforge\WowToolRegistry.cs" Link="WowToolRegistry.cs" />
     <Compile Include="..\Lightforge\LightforgeProject.cs" Link="LightforgeProject.cs" />
+    <Compile Include="..\Lightforge\ProjectTemplates.cs" Link="ProjectTemplates.cs" />
   </ItemGroup>
 
 </Project>

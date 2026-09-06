@@ -14,6 +14,7 @@
   <ItemGroup>
     <Compile Include="..\Lightforge\WowToolRegistry.cs" Link="WowToolRegistry.cs" />
     <Compile Include="..\Lightforge\LightforgeProject.cs" Link="LightforgeProject.cs" />
+    <Compile Include="..\Lightforge\ProjectTemplates.cs" Link="ProjectTemplates.cs" />
     <Compile Include="..\Lightforge.CLI\DbcTool.cs" Link="DbcTool.cs" />
     <Compile Include="..\Lightforge.CLI\BlpTool.cs" Link="BlpTool.cs" />
     <Compile Include="..\Lightforge.CLI\AdtTool.cs" Link="AdtTool.cs" />

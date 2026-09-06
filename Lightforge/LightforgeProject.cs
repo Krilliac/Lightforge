@@ -10,6 +10,8 @@ public class LightforgeProject
     public string Expansion { get; set; } = "WotLK 3.3.5a";
     public DateTime Created { get; set; } = DateTime.Now;
     public DateTime LastOpened { get; set; } = DateTime.Now;
+    public List<string> FavoriteTools { get; set; } = [];
+    public string? Template { get; set; }
 
     [JsonIgnore]
     public string ProjectDir { get; set; } = "";
